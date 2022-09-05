@@ -1,3 +1,7 @@
+# Coursera Capstone
+# author : "K BhargavaRama"
+# email : bhargavrama300@gmail.com
+
 library(shiny)
 library(shinythemes)
 library(dplyr)
