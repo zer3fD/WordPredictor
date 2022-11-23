@@ -1,0 +1,93 @@
+---
+title: "Exploratory Data Analysis on text"
+author: "Bhargav"
+output: html_document
+---
+## Exploratory Data Analysis
+This is a milestone report on the text data given as part of the datascience capstone project.This report would include analysis conducted on the textual data and further plans for building shiny app and prediction algorithm.
+
+## Loading data 
+```{r,echo=TRUE}
+library(tm)
+library(knitr)
+library(ggplot2)
+library(RWeka)
+library(stringi)
+library(dplyr)
+setwd("path://data")
+twitter <- readLines("en_US/en_US.twitter.txt" , encoding = "UTF-8",skipNul = TRUE)
+news <- readLines("en_US/en_US.news.txt" , encoding = "UTF-8" , skipNul = TRUE)
+blog <- readLines("en_US/en_US.blogs.txt",encoding = "UTF-8" , skipNul = TRUE)
+```
+
+## Summary
+
+```{r ,echo=TRUE}
+word_blog <- stri_count_words(blog)
+word_news <- stri_count_words(news)
+word_twitter <- stri_count_words(twitter)
+Totalwords <- c(sum(word_blog) , sum(word_news) , sum(word_twitter))
+Maxwords <- c(max(word_blog) , max(word_news) , max(word_twitter))
+Avgwords <- round(c(mean(word_blog) , mean(word_news) , mean(word_twitter)))
+Totalines <- c(length(blog) , length(news) , length(twitter))
+dataset <- c("Blog" , "News" , "Twitter")
+summary <- cbind(dataset , Totalwords , Totalines , Maxwords , Avgwords)
+summary
+```
+
+The news file appears to be the most compact one of all both in terms of words and lines.The twitter file has more lines but lesser words than blog.Due to this the avergae word count for blog is more than twitter.This seems to be true since blogs are generally larger in content than news which in turn is larger than the tweets on twitter.
+
+## Preprocessing and sampling data
+
+We take out about 0.75% of the data as a sample. We create a list of stopwords for the future purpose of analysis.While preprocessing stopwords,punctuation marks,numbers and white spaces.The letters in the words are also converted to lower case. The amount of sample data taken is highly dependent on the memory available on the system working.
+```{r , echo=TRUE}
+set.seed(123)
+blog_sample <- sample(blog,length(blog)*0.0075)
+news_sample <- sample(news,length(news)*0.0075)
+twitter_sample <- sample(twitter,length(twitter)*0.0075)
+stopwords <- c("and","for","in","is","it","not","the","to","by",
+               "but","can","are","that","this","an","was","were")
+# Preprocessing data
+
+blog_corpus <- VCorpus(VectorSource(blog_sample)) 
+blog_final <-blog_corpus %>% tm_map(content_transformer(tolower)) %>% tm_map(removeNumbers) %>% tm_map(removeWords,stopwords("en")) %>% tm_map(removeWords,stopwords) %>% tm_map(removePunctuation) %>% tm_map(stripWhitespace)
+
+news_corpus <- VCorpus(VectorSource(news_sample))
+news_final <-news_corpus %>% tm_map(content_transformer(tolower)) %>% tm_map(removeNumbers) %>% tm_map(removeWords,stopwords("en")) %>% tm_map(removeWords,stopwords) %>% tm_map(removePunctuation) %>% tm_map(stripWhitespace)
+
+twitter_corpus <- VCorpus(VectorSource(twitter_sample))
+twitter_final <- twitter_corpus %>% tm_map(content_transformer(tolower)) %>% tm_map(removeNumbers) %>% tm_map(removeWords,stopwords("en")) %>% tm_map(removeWords,stopwords) %>% tm_map(removePunctuation) %>% tm_map(stripWhitespace)
+```
+The text data has been sampled and been saved as a corpus document.
+## Word Frequencies
+For the purpose of determining the word frequencies, we convert the convert the text into a matrix . We then take the sum of its appearances and sort in a decreasing order to get the most used words on the top.
+```{r,echo=TRUE}
+blog_dtm <- TermDocumentMatrix(blog_final)
+blog_words <- blog_dtm %>% as.matrix() %>% rowSums() %>% sort(decreasing = TRUE)
+blog_words <- data.frame(word = names(blog_words) , freq = blog_words)
+head(blog_words,10)
+
+news_dtm <- TermDocumentMatrix(news_final)
+news_words <- news_dtm %>% as.matrix() %>% rowSums() %>% sort(decreasing = TRUE)
+news_words <- data.frame(word = names(news_words) , freq = news_words)
+head(news_words,10)
+
+twitter_dtm <- TermDocumentMatrix(twitter_final)
+twitter_words <- twitter_dtm %>% as.matrix() %>% rowSums() %>% sort(decreasing = TRUE)
+twitter_words <- data.frame(word = names(twitter_words) , freq = twitter_words)
+head(twitter_words,10)
+```
+
+## Generating Plots
+Now that we have the word frequencies of the datasets available, we'll be building plots that would be easier to visualize.
+
+```{r,echo=TRUE}
+par(mfrow = c(1,3))
+barplot(blog_words[1:10,]$freq,las = 2,names.arg = blog_words[1:10,]$word,ylim = c(0,1000),main = "Most Appearing words in blogs",xlab = "Words" , ylab = "Frequencies",col = "lightpink")
+
+barplot(news_words[1:10,]$freq,las = 2,names.arg = news_words[1:10,]$word,ylim = c(0,200),main = "Most Appearing words in news",xlab = "Words" , ylab = "Frequencies",col = "lightblue")
+
+barplot(twitter_words[1:10,]$freq,names.arg = twitter_words[1:10,]$word,ylim = c(0,1100),las = 2,main = "Most Appearing words in twitter",xlab = "Words" , ylab = "Frequencies",col = "yellow")
+```
+
+As a next step we determine the frequencies of 2-grams and 3-grams in the dataset.We'll then a build a prediction algorithm and a shiny app for the same.
