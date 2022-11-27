@@ -1,2 +1,4 @@
 # PREDICT
-Built to predict the next word.
+- Word prediction using NLP upto quad grams
+- Used R and Shiny to build the app
+
