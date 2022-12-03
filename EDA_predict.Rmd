@@ -77,6 +77,46 @@ twitter_words <- twitter_dtm %>% as.matrix() %>% rowSums() %>% sort(decreasing =
 twitter_words <- data.frame(word = names(twitter_words) , freq = twitter_words)
 head(twitter_words,10)
 ```
+## Nex we try to build bigram and trigrams
+```{r,echo=TRUE}
+bigram = function(x) NGramTokenizer(x,Weka_control(min = 2, max = 2))
+trigram = function(x) NGramTokenizer(x,Weka_control(min = 3, max = 3))
+
+bitdm_news <- TermDocumentMatrix(news_dtm, control = list(tokenize = bigram))
+bitdm_blog <- TermDocumentMatrix(blog_dtm, control = list(tokenize = bigram))
+bitdm_twitter <- TermDocumentMatrix(twitter_dtm, control = list(tokenize = bigram))
+tritdm_news <- TermDocumentMatrix(news_dtm, control = list(tokenize = trigram))
+tritdm_blog <- TermDocumentMatrix(blog_dtm, control = list(tokenize = trigram))
+tritdm_twitter <- TermDocumentMatrix(twitter_dtm, control = list(tokenize = trigram))
+
+##Checking Frequencies from Bigrams and Tri Grams
+bifreq_news <- findFreqTerms(bitdm_news, lowfreq=100)
+bifreq_blog <- findFreqTerms(bitdm_blog, lowfreq=100)
+bifreq_twitter <- findFreqTerms(bitdm_twitter, lowfreq=100)
+nbiFreq <- sort(rowSums(as.matrix(bitdm_news[bifreq_news,])),decreasing=TRUE)
+bbiFreq <- sort(rowSums(as.matrix(bitdm_blog[bifreq_blog,])),decreasing=TRUE)
+tbiFreq <- sort(rowSums(as.matrix(bitdm_twitter[bifreq_twitter,])),decreasing=TRUE)
+
+trifreq_news <- findFreqTerms(tritdm_news, lowfreq=5)
+trifreq_blog <- findFreqTerms(tritdm_blog, lowfreq=50)
+trifreq_twitter <- findFreqTerms(tritdm_twitter, lowfreq=50)
+
+ntriFreq <- sort(rowSums(as.matrix(tritdm_news[trifreq_news,])),decreasing=TRUE)
+btriFreq <- sort(rowSums(as.matrix(tritdm_blog[trifreq_blog,])),decreasing=TRUE)
+ttriFreq <- sort(rowSums(as.matrix(tritdm_twitter[trifreq_twitter,])),decreasing=TRUE)
+```
+
+## Most frequent bigrams and Trigrams in news, blogs and twitter in that order
+```{r,echo=TRUE}
+df_nbigram = data.frame(word=names(nbiFreq),Frequency=nbiFreq)
+df_bbigram = data.frame(word=names(bbiFreq),Frequency=bbiFreq)
+df_tbigram = data.frame(word=names(tbiFreq),Frequency=tbiFreq)
+
+df_ntrigram = data.frame(word=names(ntriFreq),Frequency=ntriFreq)
+df_btrigram = data.frame(word=names(btriFreq),Frequency=btriFreq)
+df_ttrigram = data.frame(word=names(ttriFreq),Frequency=ttriFreq)
+```
+
 
 ## Generating Plots
 Now that we have the word frequencies of the datasets available, we'll be building plots that would be easier to visualize.
